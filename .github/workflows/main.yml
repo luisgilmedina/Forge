@@ -21,6 +21,8 @@ jobs:
             unzip -q "$archive" -d .
             git rm -- "$archive"
             git add -A
+            git reset
+            -- .github/workflows/compilar-apk.yml
             git -c user.name="github-actions[bot]" \
                 -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
                 commit -m "Descomprimir proyecto Android"
