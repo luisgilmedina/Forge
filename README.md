@@ -1,7 +1,14 @@
-# FocusForge para OPPO Pad · proyecto Android beta 0.5
+# FocusForge para OPPO Pad · proyecto Android beta 0.7
 
 ## Mejoras de esta versión
 
+- En «Lección» se pregunta si quieres un esquema. Si aceptas, la IA lo organiza en apartados y puntos a partir del material seleccionado; se guarda con la lección y puede actualizarse después. «Ahora no» permite seguir sin generar nada.
+- Temporizador con pausa y reanudación; durante la pausa el tiempo no avanza ni se suman recompensas. Mantiene el recálculo al volver a abrir la aplicación. El reloj del sistema sigue siendo la referencia: un cambio manual de hora puede afectar el resultado; no se verifica que se haya estudiado físicamente.
+- Reto diario voluntario de 25 minutos en el Panel. La mascota empieza como un huevo y, al acumular 25 minutos completados, nace un perrito o un gatito al azar. Sus necesidades varían suavemente con los días, sin enfermedad ni desaparición. Comer, beber y jugar siguen costando minutos completados.
+- Exámenes con enunciados de comprensión, aplicación y detección de errores, distractores plausibles y explicación respaldada por los apuntes. Siguen siendo pruebas de opción múltiple generadas por IA, sujetas a revisión humana.
+- Videolección de ideas animadas con narración opcional, inspirada en el formato de resúmenes multimedia; se reproduce dentro de FocusForge y **no exporta un MP4 ni un vídeo descargable**. El audio y las diapositivas no están sincronizados palabra a palabra.
+- La conexión automática a Gemini mediante la cuenta de Google no está incluida. La clave se introduce una vez en Ajustes y, por defecto en el APK Android, se guarda cifrada con AES-256-GCM y una clave protegida por Android Keystore. Se puede desactivar «Recordar» o pulsar «Quitar clave». No se incluye en el código fuente, GitHub ni las copias JSON.
+- Ahora admite hasta 20 materiales en el dispositivo; cada uno conserva hasta 35.000 caracteres de texto. La copia importable admite hasta 5 MB. El espacio real depende del almacenamiento libre de la tablet y del WebView; si se agota, la app informa y no añade el material.
 - Nueva sección «Lección»: selecciona un material, genera con Gemini un resumen visual, tarjetas y un guion narrado. La voz de Android lee el guion dentro de la aplicación; no crea ni descarga un archivo MP3. Requiere una voz en español disponible en el dispositivo.
 - Bienvenida en el primer inicio, guía de tres pasos en el Panel y ayuda accesible desde «Cómo empezar». El botón principal cambia según el progreso para mostrar qué hacer a continuación.
 - La Sala de exámenes acepta hojas de ejercicios en texto, PDF o imagen. Con Gemini configurado, genera automáticamente preguntas tras la subida; al corregir, guarda cada fallo como tarjeta y solicita a la IA una explicación y una práctica breve. Si esa consulta falla, la tarjeta conserva la respuesta y la explicación del examen.
@@ -22,7 +29,7 @@
 - La interfaz local se carga como HTTPS sintético con `androidx.webkit.WebViewAssetLoader` desde los assets empaquetados para permitir APIs seguras y guardar datos por origen en WebView.
 - No requiere permiso de acceso general al almacenamiento: se usa el selector de archivos de Android. El único permiso declarado es `INTERNET`.
 
-**Limitaciones:** no bloquea otras apps, notificaciones, el móvil ni todo Android. No controla físicamente el tiempo de estudio ni verifica que se estudie. No hay alertas fiables con la app cerrada. La clave Gemini queda en memoria de la página mientras esta esté abierta y las consultas se envían al proveedor al solicitarlo. Las copias deben guardarse de forma manual. El nombre comercial de la tablet no determina su versión de Android: configuración con mínimo Android 8.0/API 26, pero la compatibilidad en el modelo exacto de OPPO no está ensayada.
+**Limitaciones:** no bloquea otras apps, notificaciones, el móvil ni todo Android. No controla físicamente el tiempo de estudio ni verifica que se estudie. No hay alertas fiables con la app cerrada. La clave Gemini se descifra en memoria al abrir la app para hacer consultas; alguien con acceso a la app desbloqueada podría utilizarla. Una reinstalación puede eliminar el secreto local y exigir introducirlo de nuevo. Las copias deben guardarse de forma manual. El nombre comercial de la tablet no determina su versión de Android: configuración con mínimo Android 8.0/API 26, pero la compatibilidad en el modelo exacto de OPPO no está ensayada.
 
 ## Método A: crear el APK con GitHub (sin instalar Android Studio)
 

@@ -12,6 +12,20 @@ test('Inicia y detiene plan sin bloqueo del sistema',async()=>{
  await call('STOP');
  assert.equal((await bridge.storage.local.get('ff_session')).ff_session.phase,'idle');
 });
+test('La pausa conserva el tiempo y evita recompensas hasta reanudar',async()=>{
+ await bridge.storage.local.set({ff_stats:FFCore.defaultStats(),ff_pet:FFCore.defaultPet()});
+ await call('START',{plan:[{id:'pause',subject:'Ciencias',minutes:1}],breakMinutes:1});
+ await call('PAUSE');
+ const paused=(await bridge.storage.local.get('ff_session')).ff_session;
+ assert.equal(paused.phase,'paused');assert.ok(paused.remainingMs>0);
+ await call('PING');assert.equal((await bridge.storage.local.get('ff_stats')).ff_stats.completed,0);
+ await call('RESUME');
+ const resumed=(await bridge.storage.local.get('ff_session')).ff_session;
+ assert.equal(resumed.phase,'study');assert.ok(Math.abs((resumed.endAt-Date.now())-paused.remainingMs)<1000);
+ await bridge.storage.local.set({ff_session:{...resumed,endAt:Date.now()-1}});
+ await call('PING');await call('PING');
+ assert.equal((await bridge.storage.local.get('ff_stats')).ff_stats.completed,1);
+});
 test('Avanza sesión y descanso al volver a abrirla y concede XP',async()=>{
  await bridge.storage.local.set({ff_stats:FFCore.defaultStats()});
  const plan=[{id:'a',subject:'Inglés',minutes:1},{id:'b',subject:'Historia',minutes:1}];
@@ -49,4 +63,14 @@ test('La mascota solo recibe minutos de bloques completados y consume saldo una 
  const p=(await bridge.storage.local.get('ff_pet')).ff_pet;
  assert.equal(p.spent,10);assert.equal(FFCore.petBudget((await bridge.storage.local.get('ff_stats')).ff_stats,p),5);
  assert.equal((await bridge.runtime.sendMessage({type:'CARE_PET',kind:'food'})).ok,false);
+});
+test('Un cachorro o gatito nace al alcanzar 25 minutos completados',async()=>{
+ await bridge.storage.local.set({ff_stats:FFCore.defaultStats(),ff_pet:FFCore.defaultPet()});
+ await call('START',{plan:[{id:'birth',subject:'Lectura',minutes:25}],breakMinutes:2});
+ const s=(await bridge.storage.local.get('ff_session')).ff_session;
+ await bridge.storage.local.set({ff_session:{...s,endAt:Date.now()-1}});
+ await call('PING');
+ const pet=(await bridge.storage.local.get('ff_pet')).ff_pet;
+ assert.ok(['dog','cat'].includes(pet.species));
+ assert.equal(pet.earned,25);
 });

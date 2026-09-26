@@ -3,13 +3,17 @@ package com.focusforge.study;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.speech.tts.TextToSpeech;
+import android.util.Base64;
 import android.view.View;
 import android.view.WindowInsets;
 import android.webkit.CookieManager;
@@ -29,9 +33,15 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 
 /**
  * FocusForge OPPO: native Android shell for the bundled, offline-capable study interface.
@@ -43,6 +53,8 @@ public final class MainActivity extends Activity {
     private static final int SAVE_BACKUP = 41;
     private static final String LOCAL_HOST = "appassets.androidplatform.net";
     private static final String HOME_URL = "https://" + LOCAL_HOST + "/assets/www/index.html";
+    private static final String KEY_ALIAS = "focusforge_gemini_v1";
+    private static final String KEY_PREFS = "focusforge_secure";
     private WebView webView;
     private ValueCallbackCompat pendingFiles;
     private String pendingBackup;
@@ -145,6 +157,54 @@ public final class MainActivity extends Activity {
     }
 
     private final class BackupInterface {
+        private SecretKey key(boolean create) throws Exception {
+            KeyStore store = KeyStore.getInstance("AndroidKeyStore");
+            store.load(null);
+            SecretKey existing = (SecretKey) store.getKey(KEY_ALIAS, null);
+            if (existing != null || !create) return existing;
+            KeyGenerator generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+            generator.init(new KeyGenParameterSpec.Builder(KEY_ALIAS,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(256).build());
+            return generator.generateKey();
+        }
+
+        @JavascriptInterface
+        public boolean saveGeminiKey(String value) {
+            if (value == null || value.length() < 8 || value.length() > 512) return false;
+            try {
+                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                cipher.init(Cipher.ENCRYPT_MODE, key(true));
+                String iv = Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP);
+                String encrypted = Base64.encodeToString(cipher.doFinal(value.getBytes(StandardCharsets.UTF_8)), Base64.NO_WRAP);
+                return getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).edit()
+                        .putString("gemini", iv + ":" + encrypted).commit();
+            } catch (Exception e) { return false; }
+        }
+
+        @JavascriptInterface
+        public String loadGeminiKey() {
+            String saved = getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).getString("gemini", "");
+            if (saved == null || saved.isEmpty()) return "";
+            try {
+                String[] parts = saved.split(":", 2);
+                if (parts.length != 2) return "";
+                SecretKey secret = key(false);
+                if (secret == null) return "";
+                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                cipher.init(Cipher.DECRYPT_MODE, secret,
+                        new GCMParameterSpec(128, Base64.decode(parts[0], Base64.DEFAULT)));
+                return new String(cipher.doFinal(Base64.decode(parts[1], Base64.DEFAULT)), StandardCharsets.UTF_8);
+            } catch (Exception e) { return ""; }
+        }
+
+        @JavascriptInterface
+        public void clearGeminiKey() {
+            getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).edit().remove("gemini").commit();
+        }
+
         @JavascriptInterface
         public void speakLesson(String script) {
             if (script == null || script.isEmpty() || script.length() > 3200) return;
@@ -191,8 +251,8 @@ public final class MainActivity extends Activity {
 
         @JavascriptInterface
         public void saveBackup(String json) {
-            if (json == null || json.length() > 2_500_000) {
-                runOnUiThread(() -> show("Copia demasiado grande (máximo 2,5 MB)."));
+            if (json == null || json.getBytes(StandardCharsets.UTF_8).length > 5_000_000) {
+                runOnUiThread(() -> show("Copia demasiado grande (máximo 5 MB)."));
                 return;
             }
             try {

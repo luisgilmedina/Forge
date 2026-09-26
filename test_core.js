@@ -1,6 +1,16 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const C = require('./core.js');
+test('el esquema opcional mantiene jerarquía y descarta apartados incompletos',()=>{
+ const outline=C.parseOutline(JSON.stringify({esquema:[{titulo:'Tema 1',puntos:['Idea principal','Ejemplo']},{titulo:'',puntos:['No válido']},{titulo:'Tema 2',puntos:['Conclusión']}]}));
+ assert.equal(outline.length,2);assert.equal(outline[0].points[1],'Ejemplo');
+ assert.throws(()=>C.parseOutline('{"esquema":[{"titulo":"Único","puntos":["Dato"]}]}'));
+});
+test('La mascota reduce necesidades con el paso de los días sin penalización severa',()=>{
+ const now=100*86400000;
+ assert.deepEqual(C.petNeeds({...C.defaultPet(),lastCareAt:now-2*86400000},now),{food:57,water:55,joy:59});
+ assert.equal(C.petNeeds({...C.defaultPet(),food:1,lastCareAt:now-50*86400000},now).food,20);
+});
 test('lección valida resumen, tarjetas y guion antes de mostrarlos',()=>{
  const lesson={resumen:['Idea principal','Detalle clave'],tarjetas:[{pregunta:'¿Qué?',respuesta:'La idea'},{pregunta:'¿Cómo?',respuesta:'Con práctica'}],guion:'Una explicación para repasar la lección y escuchar después. '.repeat(3)};
  const parsed=C.parseLesson(JSON.stringify(lesson));

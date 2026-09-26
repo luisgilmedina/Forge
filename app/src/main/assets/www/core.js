@@ -9,7 +9,12 @@
   const DEFAULT_PLAN = [{id:"base",subject:"Mi primera sesión",minutes:25}];
   const defaultConfig = () => ({domains:[...DEFAULT_DOMAINS], blockEnabled:true, breakMinutes:5, model:"gemini-flash-latest"});
   const defaultStats = () => ({xp:0,coins:0,minutes:0,completed:0,history:[]});
-  const defaultPet = () => ({earned:0,spent:0,food:65,water:65,joy:65,interactions:0});
+  const defaultPet = () => ({earned:0,spent:0,food:65,water:65,joy:65,interactions:0,lastCareAt:0,species:null});
+  function petNeeds(pet, now) {
+    const elapsed=Math.max(0,Math.floor((now-(Number(pet?.lastCareAt)||now))/86400000));
+    const days=Math.min(10,elapsed);
+    return {food:Math.max(20,boundedInt(pet?.food,0,100,65)-days*4),water:Math.max(20,boundedInt(pet?.water,0,100,65)-days*5),joy:Math.max(20,boundedInt(pet?.joy,0,100,65)-days*3)};
+  }
   function petBudget(stats, pet) {
     const earned = boundedInt(pet?.earned,0,10000000,0);
     const spent = boundedInt(pet?.spent,0,10000000,0);
@@ -20,8 +25,9 @@
     if(!Object.prototype.hasOwnProperty.call(costs,kind))throw Error("Acción desconocida.");
     if(petBudget(stats,pet)<costs[kind])throw Error(`Completa ${costs[kind]} minutos de estudio para esta acción.`);
     const meter=kind==="play"?"joy":kind;
-    return {...pet,spent:boundedInt(pet.spent,0,10000000,0)+costs[kind],interactions:boundedInt(pet.interactions,0,1000000,0)+1,
-      [meter]:Math.min(100,boundedInt(pet[meter],0,100,0)+25)};
+    const needs=petNeeds(pet,Date.now());
+    return {...pet,...needs,lastCareAt:Date.now(),spent:boundedInt(pet.spent,0,10000000,0)+costs[kind],interactions:boundedInt(pet.interactions,0,1000000,0)+1,
+      [meter]:Math.min(100,needs[meter]+25)};
   }
   function studyGuide(text,title="") {
     const method=chooseMethod(text,title);
@@ -117,6 +123,17 @@
     if(summary.length<2||cards.length<2||script.length<80)throw Error("La IA devolvió una lección demasiado incompleta.");
     return {summary,cards,script};
   }
+  function parseOutline(raw) {
+    const match=String(raw||"").match(/\{[\s\S]*\}/);
+    if(!match)throw Error("La IA no devolvió un esquema estructurado.");
+    let data;try{data=JSON.parse(match[0]);}catch(_){throw Error("El esquema no tiene un formato válido.");}
+    if(!Array.isArray(data.esquema))throw Error("La IA no devolvió apartados para el esquema.");
+    const sections=data.esquema.slice(0,8).filter(x=>x&&typeof x.titulo==="string"&&x.titulo.trim()&&Array.isArray(x.puntos))
+      .map(x=>({title:x.titulo.trim().slice(0,110),points:x.puntos.slice(0,6).filter(p=>typeof p==="string"&&p.trim()).map(p=>p.trim().slice(0,260))}))
+      .filter(x=>x.points.length);
+    if(sections.length<2)throw Error("La IA devolvió un esquema demasiado incompleto.");
+    return sections;
+  }
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
@@ -124,5 +141,5 @@
     const sec = Math.max(0, Math.ceil(ms/1000));
     return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
   }
-  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,studyGuide,petBudget,carePet,nextReview,parseQuiz,parseMistakeHelp,parseLesson,escapeHTML,formatClock};
+  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,studyGuide,petBudget,petNeeds,carePet,nextReview,parseQuiz,parseMistakeHelp,parseLesson,parseOutline,escapeHTML,formatClock};
 });

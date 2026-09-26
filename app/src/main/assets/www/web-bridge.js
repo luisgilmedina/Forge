@@ -57,14 +57,16 @@
     const snap=await local.get(['ff_session','ff_stats','ff_pet']);
     let s=snap.ff_session||C.defaultSession(), stats={...C.defaultStats(),...(snap.ff_stats||{})};
     let pet={...C.defaultPet(),...(snap.ff_pet||{earned:stats.minutes})};
-    let changed=false,statsChanged=false;
+    let changed=false,statsChanged=false,petChanged=false;
+    if(stats.minutes>=25&&!['dog','cat'].includes(pet.species)){pet.species=Math.random()<.5?'dog':'cat';petChanged=true;}
     const now=Date.now();
-    for(let i=0;i<32 && s.phase!=='idle' && Number.isFinite(s.endAt) && s.endAt<=now;i++){
+    for(let i=0;i<32 && s.phase!=='idle' && s.phase!=='paused' && Number.isFinite(s.endAt) && s.endAt<=now;i++){
       const endedAt=s.endAt;
       if(s.phase==='study'){
         const done=s.plan[s.index];if(!done){s=C.defaultSession();changed=true;break;}
         stats.xp+=25;stats.coins+=10;stats.minutes+=done.minutes;stats.completed+=1;
         pet.earned+=done.minutes;
+        if(stats.minutes>=25 && !['dog','cat'].includes(pet.species))pet.species=Math.random()<.5?'dog':'cat';
         stats.history=[{at:endedAt,subject:done.subject,minutes:done.minutes},...stats.history].slice(0,100);
         statsChanged=true;
         if(s.index>=s.plan.length-1){s=C.defaultSession();changed=true;break;}
@@ -77,11 +79,25 @@
       changed=true;
     }
     if(statsChanged)await local.set({ff_stats:stats,ff_pet:pet});
+    else if(petChanged)await local.set({ff_pet:pet});
     if(changed)await local.set({ff_session:s});
   }
   async function perform(action){
     if(action.type==='PING'){await advance();return {ok:true};}
     if(action.type==='STOP'){await local.set({ff_session:C.defaultSession()});return {ok:true};}
+    if(action.type==='PAUSE'){
+      await advance();const s=(await local.get('ff_session')).ff_session;
+      if(!s||!['study','break'].includes(s.phase))throw Error('No hay temporizador en marcha.');
+      const remainingMs=Math.max(0,s.endAt-Date.now());
+      if(!remainingMs){await advance();return {ok:true};}
+      await local.set({ff_session:{...s,pausedPhase:s.phase,phase:'paused',remainingMs,endAt:null}});return {ok:true};
+    }
+    if(action.type==='RESUME'){
+      const s=(await local.get('ff_session')).ff_session;
+      if(s?.phase!=='paused'||!['study','break'].includes(s.pausedPhase))throw Error('No hay sesión en pausa.');
+      const remainingMs=Math.max(1000,Math.min(10800000,Number(s.remainingMs)||1000));
+      await local.set({ff_session:{...s,phase:s.pausedPhase,endAt:Date.now()+remainingMs,pausedPhase:null,remainingMs:null}});return {ok:true};
+    }
     if(action.type==='START'){
       await advance();
       const snap=await local.get('ff_session');
