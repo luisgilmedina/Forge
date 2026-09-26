@@ -37,3 +37,16 @@ test('Recompensa de examen y rechazo de doble inicio',async()=>{
  assert.equal(retry.ok,false);
  await call('STOP');
 });
+test('La mascota solo recibe minutos de bloques completados y consume saldo una vez',async()=>{
+ await bridge.storage.local.set({ff_stats:FFCore.defaultStats(),ff_pet:FFCore.defaultPet()});
+ await call('START',{plan:[{id:'pet',subject:'Biología',minutes:15}],breakMinutes:2});
+ assert.equal((await bridge.runtime.sendMessage({type:'CARE_PET',kind:'food'})).ok,false);
+ const s=(await bridge.storage.local.get('ff_session')).ff_session;
+ await bridge.storage.local.set({ff_session:{...s,endAt:Date.now()-1}});
+ await call('PING');
+ assert.equal((await bridge.storage.local.get('ff_pet')).ff_pet.earned,15);
+ await call('CARE_PET',{kind:'food'});
+ const p=(await bridge.storage.local.get('ff_pet')).ff_pet;
+ assert.equal(p.spent,10);assert.equal(FFCore.petBudget((await bridge.storage.local.get('ff_stats')).ff_stats,p),5);
+ assert.equal((await bridge.runtime.sendMessage({type:'CARE_PET',kind:'food'})).ok,false);
+});

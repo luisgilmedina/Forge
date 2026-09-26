@@ -10,7 +10,7 @@ button, select, input, textarea{touch-action:manipulation}
  .shell{display:block;padding-bottom:calc(79px + env(safe-area-inset-bottom))}
  .sidebar{position:fixed;inset:auto 0 0 0;top:auto;bottom:0;min-height:0;align-self:auto;z-index:11;width:100%;padding:0 5px env(safe-area-inset-bottom);height:auto;max-height:none;box-shadow:0 -10px 30px #030b1599;background:#111f33;border-top:1px solid #2b5861;border-right:0}
  .sidebar .brand,.sidebar .aside-heading,.sidebar .aside-bottom{display:none}
- .sidebar nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}
+ .sidebar nav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
  .navlink{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,12px);font-weight:600;line-height:1.17;padding:8px 1px;min-height:68px;white-space:normal;text-align:center;border-radius:9px}
  .navlink>span{display:block;width:auto;font-size:23px;line-height:1.1}
  .navlink em{display:none}
@@ -37,3 +37,29 @@ button, select, input, textarea{touch-action:manipulation}
  .top-pills .glow{display:none}
 }
 @media(max-width:380px){.navlink{font-size:9px}.navlink>span{font-size:21px}.breadcrumbs{font-size:9px}}
+
+.study-guide{margin-top:16px;padding:17px;border:1px solid #3e675d;border-radius:13px;background:#19362f}
+.study-guide h3{font-size:19px;margin:9px 0}.study-guide ol{padding-left:23px;color:#d6e8df;line-height:1.8;font-size:13px}
+.pet-world{height:310px;position:relative;overflow:hidden;border:1px solid #4a8f80;border-radius:20px;margin:10px 0 20px;background:linear-gradient(#173654 0%,#447d87 68%,#549d70 69%,#286847 100%)}
+.pet-sun{position:absolute;top:24px;right:13%;font-size:48px;filter:drop-shadow(0 0 19px #ffe18e)}
+.pet-cloud{position:absolute;top:34px;left:15%;font-size:55px;color:white;opacity:.7;animation:cloudDrift 12s ease-in-out infinite alternate}
+.pet-path{position:absolute;left:0;right:0;bottom:28px;height:160px;display:flex;align-items:flex-end;justify-content:center}
+.pet-character{font-size:96px;line-height:1;filter:drop-shadow(0 12px 6px #1238);animation:petWalk 8s ease-in-out infinite alternate;transform-origin:center bottom}
+.pet-flower{position:absolute;bottom:15px;left:10%;right:10%;display:flex;justify-content:space-between;font-size:25px;pointer-events:none}
+.pet-meter{display:grid;grid-template-columns:72px 1fr 42px;align-items:center;gap:11px;margin:14px 0;font-size:12px}
+.pet-meter .progress-track{margin:0}.pet-meter strong{text-align:right}
+.pet-actions{display:grid;gap:10px}.pet-actions .button{justify-content:flex-start}
+@keyframes petWalk{from{transform:translateX(-65px) rotate(-4deg)}to{transform:translateX(65px) rotate(4deg)}}
+@keyframes cloudDrift{from{transform:translateX(-25px)}to{transform:translateX(45px)}}
+@media(prefers-reduced-motion:reduce){.pet-character,.pet-cloud{animation:none}}
+@media(max-width:600px){.pet-world{height:260px}.pet-character{font-size:75px}.navlink{font-size:9px}}
+
+.help-button{cursor:pointer;font-weight:800;white-space:nowrap}.help-button:hover{border-color:var(--mint);color:var(--mint)}
+.getting-started{background:linear-gradient(120deg,#193c40,#1b304c);border:1px solid #51897c;border-radius:18px;padding:22px;margin-bottom:17px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+.getting-started h2{font-size:21px;margin:7px 0}.getting-started p{font-size:12px;color:#c3d9dd;margin:0}
+.start-steps{display:flex;gap:8px;flex-wrap:wrap;flex:1;justify-content:center}.start-step{background:#102438;border:1px solid #426774;border-radius:11px;min-width:145px;padding:11px;flex:1;max-width:210px}.start-step strong{display:block;font-size:12px;color:#e1fff2}.start-step small{display:block;color:#a7c0cd;font-size:11px;margin-top:5px;line-height:1.4}
+.welcome-overlay{position:fixed;inset:0;z-index:30;background:#061421db;display:grid;place-items:center;padding:20px}.welcome-overlay[hidden]{display:none}
+.welcome-card{width:min(570px,100%);max-height:90dvh;overflow-y:auto;background:#172c42;border:1px solid #71b99c;box-shadow:0 25px 90px #000a;border-radius:20px;padding:26px}
+.welcome-card h1{font-size:27px;margin:12px 0}.welcome-card p,.welcome-card li{font-size:14px;line-height:1.65;color:#c6dce4}.welcome-card ol{padding-left:24px}.welcome-card li{margin:12px 0}
+@media(max-width:600px){.getting-started{display:block}.start-steps{margin:15px 0}.start-step{min-width:100%}.getting-started>.button{width:100%}.top-pills .chip:not(.help-button){display:none}}
+.ai-feedback{background:#214453;border-left:3px solid #62ddce;border-radius:7px;color:#e1f9fa;padding:11px;margin-top:11px;white-space:pre-wrap;line-height:1.6}

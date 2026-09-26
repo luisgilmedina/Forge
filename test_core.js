@@ -29,3 +29,8 @@ test('formato del reloj y sugerencia no clínica',()=>{
  assert.equal(C.formatClock(65_001),'01:06');
  assert.equal(C.chooseMethod('fórmulas de química').name,'El Manicomio');
 });
+test('ayudas de IA solo aceptan índices y explicaciones válidos',()=>{
+ const result=C.parseMistakeHelp(JSON.stringify({ayudas:[{indice:2,explicacion:'Confundiste los signos.',practica:'Repite el ejercicio 2.'},{indice:99,explicacion:'Fuera de examen.'}],resumen:'Repasa los signos.'}),5);
+ assert.equal(result.help.size,1);assert.equal(result.help.get(2).practice,'Repite el ejercicio 2.');
+ assert.throws(()=>C.parseMistakeHelp('{"ayudas":[]}',5));
+});

@@ -19,7 +19,7 @@
   }
   function makeStorage(which){
     const volatile = which==='session';
-    const allNames=['ff_config','ff_plan','ff_stats','ff_session','ff_materials','ff_errors','ff_chat'];
+    const allNames=['ff_config','ff_plan','ff_stats','ff_session','ff_materials','ff_errors','ff_chat','ff_pet','ff_welcome_seen'];
     const read=name=>volatile?sessionMemory.get(name):decode(name);
     return {
       async get(keys){
@@ -54,8 +54,9 @@
   async function advance(){
     // Recalculate against wall-clock time whenever app wakes or user opens it.
     // No pretend background alarms: alerts are visible only with the app open.
-    const snap=await local.get(['ff_session','ff_stats']);
+    const snap=await local.get(['ff_session','ff_stats','ff_pet']);
     let s=snap.ff_session||C.defaultSession(), stats={...C.defaultStats(),...(snap.ff_stats||{})};
+    let pet={...C.defaultPet(),...(snap.ff_pet||{earned:stats.minutes})};
     let changed=false,statsChanged=false;
     const now=Date.now();
     for(let i=0;i<32 && s.phase!=='idle' && Number.isFinite(s.endAt) && s.endAt<=now;i++){
@@ -63,6 +64,7 @@
       if(s.phase==='study'){
         const done=s.plan[s.index];if(!done){s=C.defaultSession();changed=true;break;}
         stats.xp+=25;stats.coins+=10;stats.minutes+=done.minutes;stats.completed+=1;
+        pet.earned+=done.minutes;
         stats.history=[{at:endedAt,subject:done.subject,minutes:done.minutes},...stats.history].slice(0,100);
         statsChanged=true;
         if(s.index>=s.plan.length-1){s=C.defaultSession();changed=true;break;}
@@ -74,7 +76,7 @@
       }else{s=C.defaultSession();}
       changed=true;
     }
-    if(statsChanged)await local.set({ff_stats:stats});
+    if(statsChanged)await local.set({ff_stats:stats,ff_pet:pet});
     if(changed)await local.set({ff_session:s});
   }
   async function perform(action){
@@ -96,6 +98,13 @@
       const correct=C.boundedInt(action.correct,0,8,0);
       stats.xp+=correct*5;stats.coins+=correct*2;
       await local.set({ff_stats:stats});return {ok:true};
+    }
+    if(action.type==='CARE_PET'){
+      await advance();
+      const snap=await local.get(['ff_stats','ff_pet']);
+      const stats=snap.ff_stats||C.defaultStats();
+      const pet=C.carePet({...C.defaultPet(),...(snap.ff_pet||{earned:stats.minutes})},stats,action.kind);
+      await local.set({ff_pet:pet});return {ok:true};
     }
     throw Error('Acción desconocida.');
   }

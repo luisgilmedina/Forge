@@ -9,6 +9,29 @@
   const DEFAULT_PLAN = [{id:"base",subject:"Mi primera sesión",minutes:25}];
   const defaultConfig = () => ({domains:[...DEFAULT_DOMAINS], blockEnabled:true, breakMinutes:5, model:"gemini-flash-latest"});
   const defaultStats = () => ({xp:0,coins:0,minutes:0,completed:0,history:[]});
+  const defaultPet = () => ({earned:0,spent:0,food:65,water:65,joy:65,interactions:0});
+  function petBudget(stats, pet) {
+    const earned = boundedInt(pet?.earned,0,10000000,0);
+    const spent = boundedInt(pet?.spent,0,10000000,0);
+    return Math.max(0,Math.min(boundedInt(stats?.minutes,0,10000000,0),earned)-spent);
+  }
+  function carePet(pet, stats, kind) {
+    const costs={food:10,water:5,play:15};
+    if(!Object.prototype.hasOwnProperty.call(costs,kind))throw Error("Acción desconocida.");
+    if(petBudget(stats,pet)<costs[kind])throw Error(`Completa ${costs[kind]} minutos de estudio para esta acción.`);
+    const meter=kind==="play"?"joy":kind;
+    return {...pet,spent:boundedInt(pet.spent,0,10000000,0)+costs[kind],interactions:boundedInt(pet.interactions,0,1000000,0)+1,
+      [meter]:Math.min(100,boundedInt(pet[meter],0,100,0)+25)};
+  }
+  function studyGuide(text,title="") {
+    const method=chooseMethod(text,title);
+    const steps=method.name==="Inmersión Fluida"
+      ?["Lee un fragmento y subraya las expresiones nuevas.","Explícalo en voz alta sin mirar.","Practica vocabulario y comprueba los fallos."]
+      :method.name==="El Manicomio"
+      ?["Identifica las fórmulas o conceptos centrales.","Resuelve un ejemplo sin mirar el material.","Corrige el resultado y anota el error para repetirlo."]
+      :["Divide los apuntes en tres bloques de ideas.","Recuerda cada bloque sin mirar, por escrito o en voz alta.","Contrasta con el archivo y repasa lo que falte."];
+    return {...method,steps};
+  }
   const defaultSession = () => ({phase:"idle",endAt:null,plan:[],index:0,breakMinutes:5});
   function normalizeDomain(raw) {
     if (typeof raw !== "string") return null;
@@ -70,6 +93,19 @@
     if (questions.length < 3) throw new Error("La IA devolvió menos de tres preguntas utilizables.");
     return questions;
   }
+  function parseMistakeHelp(raw, count) {
+    const match=String(raw||"").match(/\{[\s\S]*\}/);
+    if(!match)throw Error("La IA no devolvió explicaciones estructuradas.");
+    let data;try{data=JSON.parse(match[0]);}catch(_){throw Error("La explicación de IA no tiene un formato válido.");}
+    if(!Array.isArray(data.ayudas))throw Error("No se recibieron ayudas para los fallos.");
+    const help=new Map();
+    for(const item of data.ayudas){
+      if(Number.isInteger(item.indice)&&item.indice>=0&&item.indice<count&&typeof item.explicacion==="string"&&item.explicacion.trim())
+        help.set(item.indice,{explanation:item.explicacion.trim().slice(0,550),practice:typeof item.practica==="string"?item.practica.trim().slice(0,300):""});
+    }
+    if(!help.size)throw Error("La IA no explicó ningún fallo.");
+    return {help,summary:typeof data.resumen==="string"?data.resumen.trim().slice(0,650):""};
+  }
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
@@ -77,5 +113,5 @@
     const sec = Math.max(0, Math.ceil(ms/1000));
     return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
   }
-  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,nextReview,parseQuiz,escapeHTML,formatClock};
+  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,studyGuide,petBudget,carePet,nextReview,parseQuiz,parseMistakeHelp,escapeHTML,formatClock};
 });

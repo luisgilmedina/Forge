@@ -1,4 +1,15 @@
-# FocusForge para OPPO Pad · proyecto Android beta 0.3
+# FocusForge para OPPO Pad · proyecto Android beta 0.4
+
+## Mejoras de esta versión
+
+- Bienvenida en el primer inicio, guía de tres pasos en el Panel y ayuda accesible desde «Cómo empezar». El botón principal cambia según el progreso para mostrar qué hacer a continuación.
+- La Sala de exámenes acepta hojas de ejercicios en texto, PDF o imagen. Con Gemini configurado, genera automáticamente preguntas tras la subida; al corregir, guarda cada fallo como tarjeta y solicita a la IA una explicación y una práctica breve. Si esa consulta falla, la tarjeta conserva la respuesta y la explicación del examen.
+- Subida de archivos desde el Panel inicial; se crea una guía para la asignatura y un plan de estudio de 25 minutos. Con una clave Gemini opcional se puede generar y guardar una guía más específica basada en los apuntes.
+- Nueva sección Mascota: jardín animado, crecimiento por minutos de estudio completados y acciones de comida (10 min), agua (5 min) y juego (15 min). Las acciones gastan únicamente el saldo obtenido al completar bloques; detener un bloque antes de tiempo no concede minutos.
+- Los datos de la mascota y los planes de IA se incluyen en la copia de seguridad. Las copias anteriores siguen siendo importables.
+- Esta versión no incorpora bloqueo de pantalla ni vigilancia del dispositivo.
+
+**Actualización desde un APK de depuración anterior:** una nueva compilación de GitHub Actions puede llevar una firma distinta. Exporta primero tu copia desde Ajustes. Si Android no permite instalar encima, desinstala la versión anterior, instala el nuevo APK e importa la copia. Desinstalar sin exportar borra los datos locales.
 
 **ESTE ZIP ES CÓDIGO FUENTE, NO ES UN APK.** Se entrega un proyecto de Android Studio, junto con una tarea de GitHub Actions para crear automáticamente un APK de prueba. En el entorno utilizado para preparar los archivos no hay Android SDK, Gradle ni acceso a sus repositorios, por lo que **no se ha podido generar ni instalar un APK real**. No presentes este ZIP como una aplicación lista para instalar.
 
