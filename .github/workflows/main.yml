@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-ponlo
 jobs:
   android:
     runs-on: ubuntu-latest
