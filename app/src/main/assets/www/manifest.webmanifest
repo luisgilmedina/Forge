@@ -1,0 +1,27 @@
+{
+  "name": "FocusForge · Estudio en tablet",
+  "short_name": "FocusForge",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "description": "Temporizador, repaso espaciado, XP y tutor de IA opcional para estudiar en tablet.",
+  "background_color": "#111f33",
+  "theme_color": "#111f33",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icons/192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

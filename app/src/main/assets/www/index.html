@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+ <meta name="theme-color" content="#111f33" />
+ <meta name="apple-mobile-web-app-capable" content="yes" />
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+ <meta name="apple-mobile-web-app-title" content="FocusForge" />
+ <meta name="description" content="FocusForge: retos de estudio, IA opcional, concentración, XP y repaso espaciado." />
+ 
+ <link rel="icon" type="image/png" href="icons/192.png" />
+ <link rel="apple-touch-icon" href="icons/192.png" />
+ <link rel="stylesheet" href="style.css" />
+ <title>FocusForge · Tablet</title>
+</head>
+<body>
+ <div class="shell">
+  <aside class="sidebar"><div class="brand"><img src="icons/48.png" width="42" height="42" alt="" /><div><strong>FOCUS<span>FORGE</span></strong><small>OPPO · ANDROID BETA 0.3</small></div></div>
+    <p class="aside-heading">TU CENTRO DE OPERACIONES</p>
+    <nav aria-label="Secciones"><button class="navlink selected" type="button" data-view="dashboard"><span>◈</span> Panel</button><button class="navlink" type="button" data-view="materials"><span>▤</span> Materiales</button><button class="navlink" type="button" data-view="ai"><span>✦</span> Tutor IA</button><button class="navlink" type="button" data-view="quiz"><span>◎</span> Exámenes</button><button class="navlink" type="button" data-view="errors"><span>⬡</span> Repaso <em id="due-count">0</em></button><button class="navlink" type="button" data-view="settings"><span>⚙</span> Ajustes</button></nav>
+    <div class="aside-bottom"><div class="online-indicator"></div><div><strong>Modo voluntario</strong><small>Tú controlas tu sesión.</small></div></div>
+  </aside>
+  <main class="main"><header class="topbar"><div class="breadcrumbs">FOCUSFORGE <span>/</span> <span id="page-name">PANEL</span></div><div class="top-pills"><span id="key-status" class="chip">IA sin configurar</span><span class="chip glow">● Tablet preparada</span></div></header><div id="view" class="page"><div class="loading">Iniciando…</div></div><footer>Versión Android para OPPO Pad · Datos solo en esta aplicación · Sin bloqueo del sistema.</footer></main>
+ </div>
+ <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+ <script src="core.js" defer></script><script src="web-bridge.js" defer></script><script src="app.js" defer></script>
+ <!-- En el APK, los recursos están incluidos en /assets, no se registra un service worker. -->
+</body>
+</html>
