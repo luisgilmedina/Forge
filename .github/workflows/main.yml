@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-
+ponlo
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -41,10 +41,7 @@ jobs:
       - name: Probar la lógica
         run: node --test test_core.js test_web_bridge.js
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Instalar Android 35
-        run: sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+      
 
       - uses: gradle/actions/setup-gradle@v4
         with:
