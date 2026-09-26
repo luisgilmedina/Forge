@@ -10,7 +10,7 @@ button, select, input, textarea{touch-action:manipulation}
  .shell{display:block;padding-bottom:calc(79px + env(safe-area-inset-bottom))}
  .sidebar{position:fixed;inset:auto 0 0 0;top:auto;bottom:0;min-height:0;align-self:auto;z-index:11;width:100%;padding:0 5px env(safe-area-inset-bottom);height:auto;max-height:none;box-shadow:0 -10px 30px #030b1599;background:#111f33;border-top:1px solid #2b5861;border-right:0}
  .sidebar .brand,.sidebar .aside-heading,.sidebar .aside-bottom{display:none}
- .sidebar nav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+ .sidebar nav{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;overflow-x:auto}
  .navlink{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,12px);font-weight:600;line-height:1.17;padding:8px 1px;min-height:68px;white-space:normal;text-align:center;border-radius:9px}
  .navlink>span{display:block;width:auto;font-size:23px;line-height:1.1}
  .navlink em{display:none}
@@ -63,3 +63,9 @@ button, select, input, textarea{touch-action:manipulation}
 .welcome-card h1{font-size:27px;margin:12px 0}.welcome-card p,.welcome-card li{font-size:14px;line-height:1.65;color:#c6dce4}.welcome-card ol{padding-left:24px}.welcome-card li{margin:12px 0}
 @media(max-width:600px){.getting-started{display:block}.start-steps{margin:15px 0}.start-step{min-width:100%}.getting-started>.button{width:100%}.top-pills .chip:not(.help-button){display:none}}
 .ai-feedback{background:#214453;border-left:3px solid #62ddce;border-radius:7px;color:#e1f9fa;padding:11px;margin-top:11px;white-space:pre-wrap;line-height:1.6}
+.lesson-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.lesson-idea,.lesson-flashcard{background:#182e43;border:1px solid #3a6571;border-radius:13px;padding:17px;min-height:115px}
+.lesson-idea p{margin:9px 0 0;color:#e2f4f5}.lesson-number{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#27755c;color:white;font-weight:800}
+.lesson-flashcard{display:flex;flex-direction:column;align-items:flex-start;gap:12px}.lesson-flashcard strong{line-height:1.5}.lesson-flashcard .answer{width:100%;margin-top:0}
+.lesson-transcript{margin-top:16px;color:#c4e3ec;font-size:13px}.lesson-transcript summary{cursor:pointer;padding:8px 0}
+@media(max-width:500px){.sidebar nav{display:flex;scroll-snap-type:x mandatory}.navlink{min-width:60px;flex:0 0 60px;scroll-snap-align:start}}

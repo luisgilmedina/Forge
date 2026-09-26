@@ -106,6 +106,17 @@
     if(!help.size)throw Error("La IA no explicó ningún fallo.");
     return {help,summary:typeof data.resumen==="string"?data.resumen.trim().slice(0,650):""};
   }
+  function parseLesson(raw) {
+    const match=String(raw||"").match(/\{[\s\S]*\}/);
+    if(!match)throw Error("La IA no devolvió una lección estructurada.");
+    let data;try{data=JSON.parse(match[0]);}catch(_){throw Error("La lección no tiene un formato válido.");}
+    if(!Array.isArray(data.resumen)||!Array.isArray(data.tarjetas)||typeof data.guion!=="string")throw Error("Faltan partes de la lección.");
+    const summary=data.resumen.slice(0,6).filter(x=>typeof x==="string"&&x.trim()).map(x=>x.trim().slice(0,300));
+    const cards=data.tarjetas.slice(0,8).filter(x=>x&&typeof x.pregunta==="string"&&x.pregunta.trim()&&typeof x.respuesta==="string"&&x.respuesta.trim()).map(x=>({question:x.pregunta.trim().slice(0,300),answer:x.respuesta.trim().slice(0,500)}));
+    const script=data.guion.trim().slice(0,3200);
+    if(summary.length<2||cards.length<2||script.length<80)throw Error("La IA devolvió una lección demasiado incompleta.");
+    return {summary,cards,script};
+  }
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
@@ -113,5 +124,5 @@
     const sec = Math.max(0, Math.ceil(ms/1000));
     return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
   }
-  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,studyGuide,petBudget,carePet,nextReview,parseQuiz,parseMistakeHelp,escapeHTML,formatClock};
+  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,studyGuide,petBudget,carePet,nextReview,parseQuiz,parseMistakeHelp,parseLesson,escapeHTML,formatClock};
 });

@@ -1,7 +1,8 @@
-# FocusForge para OPPO Pad · proyecto Android beta 0.4
+# FocusForge para OPPO Pad · proyecto Android beta 0.5
 
 ## Mejoras de esta versión
 
+- Nueva sección «Lección»: selecciona un material, genera con Gemini un resumen visual, tarjetas y un guion narrado. La voz de Android lee el guion dentro de la aplicación; no crea ni descarga un archivo MP3. Requiere una voz en español disponible en el dispositivo.
 - Bienvenida en el primer inicio, guía de tres pasos en el Panel y ayuda accesible desde «Cómo empezar». El botón principal cambia según el progreso para mostrar qué hacer a continuación.
 - La Sala de exámenes acepta hojas de ejercicios en texto, PDF o imagen. Con Gemini configurado, genera automáticamente preguntas tras la subida; al corregir, guarda cada fallo como tarjeta y solicita a la IA una explicación y una práctica breve. Si esa consulta falla, la tarjeta conserva la respuesta y la explicación del examen.
 - Subida de archivos desde el Panel inicial; se crea una guía para la asignatura y un plan de estudio de 25 minutos. Con una clave Gemini opcional se puede generar y guardar una guía más específica basada en los apuntes.

@@ -9,6 +9,7 @@ import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.view.WindowInsets;
 import android.webkit.CookieManager;
@@ -45,6 +46,9 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private ValueCallbackCompat pendingFiles;
     private String pendingBackup;
+    private TextToSpeech narrator;
+    private boolean narratorReady;
+    private String pendingNarration;
 
     private interface ValueCallbackCompat { void deliver(Uri[] uris); }
 
@@ -142,6 +146,50 @@ public final class MainActivity extends Activity {
 
     private final class BackupInterface {
         @JavascriptInterface
+        public void speakLesson(String script) {
+            if (script == null || script.isEmpty() || script.length() > 3200) return;
+            runOnUiThread(() -> {
+                pendingNarration = script;
+                if (narratorReady && narrator != null) {
+                    narrator.speak(pendingNarration, TextToSpeech.QUEUE_FLUSH, null, "focusforge-lesson");
+                    pendingNarration = null;
+                } else if (narrator == null) {
+                    narrator = new TextToSpeech(MainActivity.this, status -> runOnUiThread(() -> {
+                        if (status != TextToSpeech.SUCCESS || narrator == null) {
+                            pendingNarration = null;
+                            if (narrator != null) { narrator.shutdown(); narrator = null; }
+                            narratorReady = false;
+                            show("No hay voz de Android disponible.");
+                            return;
+                        }
+                        int language = narrator.setLanguage(new Locale("es", "ES"));
+                        if (language == TextToSpeech.LANG_MISSING_DATA || language == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            pendingNarration = null;
+                            narrator.shutdown();
+                            narrator = null;
+                            narratorReady = false;
+                            show("Instala una voz en español en los ajustes de Android.");
+                            return;
+                        }
+                        narratorReady = true;
+                        if (pendingNarration != null) {
+                            narrator.speak(pendingNarration, TextToSpeech.QUEUE_FLUSH, null, "focusforge-lesson");
+                            pendingNarration = null;
+                        }
+                    }));
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void stopLesson() {
+            runOnUiThread(() -> {
+                pendingNarration = null;
+                if (narrator != null) narrator.stop();
+            });
+        }
+
+        @JavascriptInterface
         public void saveBackup(String json) {
             if (json == null || json.length() > 2_500_000) {
                 runOnUiThread(() -> show("Copia demasiado grande (máximo 2,5 MB)."));
@@ -219,6 +267,8 @@ public final class MainActivity extends Activity {
             webView.destroy();
             webView = null;
         }
+        pendingNarration = null;
+        if (narrator != null) { narrator.stop(); narrator.shutdown(); narrator = null; }
         super.onDestroy();
     }
 }

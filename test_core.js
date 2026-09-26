@@ -1,6 +1,13 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const C = require('./core.js');
+test('lección valida resumen, tarjetas y guion antes de mostrarlos',()=>{
+ const lesson={resumen:['Idea principal','Detalle clave'],tarjetas:[{pregunta:'¿Qué?',respuesta:'La idea'},{pregunta:'¿Cómo?',respuesta:'Con práctica'}],guion:'Una explicación para repasar la lección y escuchar después. '.repeat(3)};
+ const parsed=C.parseLesson(JSON.stringify(lesson));
+ assert.equal(parsed.cards.length,2);
+ assert.equal(parsed.summary[0],'Idea principal');
+ assert.throws(()=>C.parseLesson(JSON.stringify({...lesson,tarjetas:[]})));
+});
 test('valida dominios y evita credenciales/esquemas extraños',()=>{
  assert.equal(C.normalizeDomain('https://www.YouTube.com/watch?v=2'),'youtube.com');
  assert.equal(C.normalizeDomain('evil.com@youtube.com'),null);
