@@ -1,7 +1,11 @@
-# FocusForge para OPPO Pad · proyecto Android beta 0.7
+# FocusForge para OPPO Pad · proyecto Android beta 0.8
 
 ## Mejoras de esta versión
 
+- Admite Excel `.xlsx` sin IA: lee localmente los valores guardados de las primeras tres hojas y hasta 120 filas por hoja. No evalúa fórmulas y las fechas pueden aparecer como números. Para Access `.accdb` / `.mdb` y el antiguo `.xls`, exporta la tabla a CSV antes de subirla. Máximo 2 MB por `.xlsx`.
+- Permite configurar la API de OpenAI y Gemini por separado, o solo una de ellas. OpenAI (modelo `gpt-4.1-mini`) genera texto, lecciones, esquemas y exámenes; Gemini también extrae contenido de PDF e imágenes. En Ajustes se elige el proveedor de texto; si solo hay una clave disponible, se usa esa para tareas compatibles. No cambia de proveedor tras un error de cuota sin que tú lo elijas.
+- La clave de OpenAI se guarda cifrada en Android Keystore y las llamadas se hacen desde Android, sin incluir la clave en JavaScript, el ZIP, GitHub ni las copias. No se debe poner una clave de API en una app pública sin infraestructura de servidor. Esta versión está prevista para uso personal: alguien que tenga la tablet desbloqueada puede consumir tu saldo de la API.
+- Tener ChatGPT Plus no habilita ni paga por sí mismo la API de OpenAI. La integración automática de OpenAI requiere una clave API activa y puede incurrir en cargos independientes. FocusForge no recibe tu contraseña de ChatGPT.
 - En «Lección» se pregunta si quieres un esquema. Si aceptas, la IA lo organiza en apartados y puntos a partir del material seleccionado; se guarda con la lección y puede actualizarse después. «Ahora no» permite seguir sin generar nada.
 - Temporizador con pausa y reanudación; durante la pausa el tiempo no avanza ni se suman recompensas. Mantiene el recálculo al volver a abrir la aplicación. El reloj del sistema sigue siendo la referencia: un cambio manual de hora puede afectar el resultado; no se verifica que se haya estudiado físicamente.
 - Reto diario voluntario de 25 minutos en el Panel. La mascota empieza como un huevo y, al acumular 25 minutos completados, nace un perrito o un gatito al azar. Sus necesidades varían suavemente con los días, sin enfermedad ni desaparición. Comer, beber y jugar siguen costando minutos completados.
@@ -9,9 +13,9 @@
 - Videolección de ideas animadas con narración opcional, inspirada en el formato de resúmenes multimedia; se reproduce dentro de FocusForge y **no exporta un MP4 ni un vídeo descargable**. El audio y las diapositivas no están sincronizados palabra a palabra.
 - La conexión automática a Gemini mediante la cuenta de Google no está incluida. La clave se introduce una vez en Ajustes y, por defecto en el APK Android, se guarda cifrada con AES-256-GCM y una clave protegida por Android Keystore. Se puede desactivar «Recordar» o pulsar «Quitar clave». No se incluye en el código fuente, GitHub ni las copias JSON.
 - Ahora admite hasta 20 materiales en el dispositivo; cada uno conserva hasta 35.000 caracteres de texto. La copia importable admite hasta 5 MB. El espacio real depende del almacenamiento libre de la tablet y del WebView; si se agota, la app informa y no añade el material.
-- Nueva sección «Lección»: selecciona un material, genera con Gemini un resumen visual, tarjetas y un guion narrado. La voz de Android lee el guion dentro de la aplicación; no crea ni descarga un archivo MP3. Requiere una voz en español disponible en el dispositivo.
+- Nueva sección «Lección»: selecciona un material, genera con la API configurada un resumen visual, tarjetas y un guion narrado. La voz de Android lee el guion dentro de la aplicación; no crea ni descarga un archivo MP3. Requiere una voz en español disponible en el dispositivo.
 - Bienvenida en el primer inicio, guía de tres pasos en el Panel y ayuda accesible desde «Cómo empezar». El botón principal cambia según el progreso para mostrar qué hacer a continuación.
-- La Sala de exámenes acepta hojas de ejercicios en texto, PDF o imagen. Con Gemini configurado, genera automáticamente preguntas tras la subida; al corregir, guarda cada fallo como tarjeta y solicita a la IA una explicación y una práctica breve. Si esa consulta falla, la tarjeta conserva la respuesta y la explicación del examen.
+- La Sala de exámenes acepta texto, CSV y XLSX sin IA para extracción, PDF e imagen con Gemini. Con OpenAI o Gemini conectado genera preguntas; al corregir, guarda cada fallo como tarjeta y solicita a la IA una explicación y una práctica breve. Si esa consulta falla, la tarjeta conserva la respuesta y la explicación del examen.
 - Subida de archivos desde el Panel inicial; se crea una guía para la asignatura y un plan de estudio de 25 minutos. Con una clave Gemini opcional se puede generar y guardar una guía más específica basada en los apuntes.
 - Nueva sección Mascota: jardín animado, crecimiento por minutos de estudio completados y acciones de comida (10 min), agua (5 min) y juego (15 min). Las acciones gastan únicamente el saldo obtenido al completar bloques; detener un bloque antes de tiempo no concede minutos.
 - Los datos de la mascota y los planes de IA se incluyen en la copia de seguridad. Las copias anteriores siguen siendo importables.
@@ -25,7 +29,7 @@
 
 - APK nativo al compilar, con icono propio e interfaz táctil de FocusForge que se distribuye **dentro del APK**: sin Netlify ni ninguna dirección web.
 - Cronómetro y rutinas (recalcula la duración al volver a abrir), experiencia XP, monedas, avatar, materiales de texto, tarjetas de repaso, exportación/importación de copias mediante selector de archivos de Android.
-- Consultas de IA, análisis de PDF e imágenes y creación de exámenes **solo si el usuario configura su propia clave de Gemini y tiene conexión**. No se incluye ninguna clave. No se ha verificado este servicio desde una tablet real.
+- Consultas y exámenes con OpenAI o Gemini **solo con una clave API configurada y conexión**. PDF e imágenes necesitan Gemini para extracción. No se incluye ninguna clave. No se ha verificado este servicio desde una tablet real.
 - La interfaz local se carga como HTTPS sintético con `androidx.webkit.WebViewAssetLoader` desde los assets empaquetados para permitir APIs seguras y guardar datos por origen en WebView.
 - No requiere permiso de acceso general al almacenamiento: se usa el selector de archivos de Android. El único permiso declarado es `INTERNET`.
 
@@ -70,3 +74,7 @@ El archivo de GitHub Actions usa JDK 17, Gradle 8.11.1, AGP 8.9.2, Android SDK 3
 - https://developer.android.com/build/building-cmdline
 - https://developer.android.com/build/releases/agp-8-9-0-release-notes
 - https://developer.android.com/distribute/marketing-tools/alternative-distribution
+
+## ChatGPT sin API (0.9)
+
+En Lección o Exámenes elige un material, pulsa «Copiar petición», pega en ChatGPT y pega la respuesta JSON en FocusForge. Genera lecciones, esquemas y exámenes sin clave API; requiere pasos manuales. Para leer PDF o imágenes dentro de FocusForge sigue haciendo falta Gemini. El material solo se comparte con ChatGPT al pegarlo allí.

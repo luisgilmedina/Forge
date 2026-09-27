@@ -1,6 +1,14 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const C = require('./core.js');
+test('una o dos API: texto usa la elegida y adjuntos requieren Gemini',()=>{
+ assert.equal(C.chooseAIProvider('automatic',true,true), 'openai');
+ assert.equal(C.chooseAIProvider('gemini',true,true), 'gemini');
+ assert.equal(C.chooseAIProvider('gemini',true,false), 'openai');
+ assert.equal(C.chooseAIProvider('automatic',false,true), 'gemini');
+ assert.equal(C.chooseAIProvider('automatic',true,false,true), null);
+ assert.equal(C.chooseAIProvider('automatic',true,true,true), 'gemini');
+});
 test('el esquema opcional mantiene jerarquía y descarta apartados incompletos',()=>{
  const outline=C.parseOutline(JSON.stringify({esquema:[{titulo:'Tema 1',puntos:['Idea principal','Ejemplo']},{titulo:'',puntos:['No válido']},{titulo:'Tema 2',puntos:['Conclusión']}]}));
  assert.equal(outline.length,2);assert.equal(outline[0].points[1],'Ejemplo');

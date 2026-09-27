@@ -7,9 +7,15 @@
   "use strict";
   const DEFAULT_DOMAINS = ["youtube.com", "tiktok.com", "instagram.com", "reddit.com", "x.com"];
   const DEFAULT_PLAN = [{id:"base",subject:"Mi primera sesión",minutes:25}];
-  const defaultConfig = () => ({domains:[...DEFAULT_DOMAINS], blockEnabled:true, breakMinutes:5, model:"gemini-flash-latest"});
+  const defaultConfig = () => ({domains:[...DEFAULT_DOMAINS], blockEnabled:true, breakMinutes:5, model:"gemini-flash-latest",aiProvider:"automatic"});
   const defaultStats = () => ({xp:0,coins:0,minutes:0,completed:0,history:[]});
   const defaultPet = () => ({earned:0,spent:0,food:65,water:65,joy:65,interactions:0,lastCareAt:0,species:null});
+  function chooseAIProvider(preference, openai, gemini, attachment=false) {
+    if(attachment)return gemini?"gemini":null;
+    if(preference==="gemini"&&gemini)return "gemini";
+    if(openai)return "openai";
+    return gemini?"gemini":null;
+  }
   function petNeeds(pet, now) {
     const elapsed=Math.max(0,Math.floor((now-(Number(pet?.lastCareAt)||now))/86400000));
     const days=Math.min(10,elapsed);
@@ -141,5 +147,5 @@
     const sec = Math.max(0, Math.ceil(ms/1000));
     return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
   }
-  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseMethod,studyGuide,petBudget,petNeeds,carePet,nextReview,parseQuiz,parseMistakeHelp,parseLesson,parseOutline,escapeHTML,formatClock};
+  return {DEFAULT_DOMAINS,DEFAULT_PLAN,defaultConfig,defaultStats,defaultPet,defaultSession,normalizeDomain,cleanDomains,boundedInt,cleanPlan,chooseAIProvider,chooseMethod,studyGuide,petBudget,petNeeds,carePet,nextReview,parseQuiz,parseMistakeHelp,parseLesson,parseOutline,escapeHTML,formatClock};
 });

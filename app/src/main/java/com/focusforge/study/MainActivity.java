@@ -29,14 +29,19 @@ import android.widget.Toast;
 import androidx.webkit.WebViewAssetLoader;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -54,6 +59,7 @@ public final class MainActivity extends Activity {
     private static final String LOCAL_HOST = "appassets.androidplatform.net";
     private static final String HOME_URL = "https://" + LOCAL_HOST + "/assets/www/index.html";
     private static final String KEY_ALIAS = "focusforge_gemini_v1";
+    private static final String OPENAI_ALIAS = "focusforge_openai_v1";
     private static final String KEY_PREFS = "focusforge_secure";
     private WebView webView;
     private ValueCallbackCompat pendingFiles;
@@ -61,6 +67,7 @@ public final class MainActivity extends Activity {
     private TextToSpeech narrator;
     private boolean narratorReady;
     private String pendingNarration;
+    private final AtomicBoolean openAIWorking = new AtomicBoolean(false);
 
     private interface ValueCallbackCompat { void deliver(Uri[] uris); }
 
@@ -157,13 +164,13 @@ public final class MainActivity extends Activity {
     }
 
     private final class BackupInterface {
-        private SecretKey key(boolean create) throws Exception {
+        private SecretKey key(String alias, boolean create) throws Exception {
             KeyStore store = KeyStore.getInstance("AndroidKeyStore");
             store.load(null);
-            SecretKey existing = (SecretKey) store.getKey(KEY_ALIAS, null);
+            SecretKey existing = (SecretKey) store.getKey(alias, null);
             if (existing != null || !create) return existing;
             KeyGenerator generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-            generator.init(new KeyGenParameterSpec.Builder(KEY_ALIAS,
+            generator.init(new KeyGenParameterSpec.Builder(alias,
                     KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
@@ -171,27 +178,25 @@ public final class MainActivity extends Activity {
             return generator.generateKey();
         }
 
-        @JavascriptInterface
-        public boolean saveGeminiKey(String value) {
+        private boolean saveSecret(String alias, String preference, String value) {
             if (value == null || value.length() < 8 || value.length() > 512) return false;
             try {
                 Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-                cipher.init(Cipher.ENCRYPT_MODE, key(true));
+                cipher.init(Cipher.ENCRYPT_MODE, key(alias, true));
                 String iv = Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP);
                 String encrypted = Base64.encodeToString(cipher.doFinal(value.getBytes(StandardCharsets.UTF_8)), Base64.NO_WRAP);
                 return getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).edit()
-                        .putString("gemini", iv + ":" + encrypted).commit();
+                        .putString(preference, iv + ":" + encrypted).commit();
             } catch (Exception e) { return false; }
         }
 
-        @JavascriptInterface
-        public String loadGeminiKey() {
-            String saved = getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).getString("gemini", "");
+        private String loadSecret(String alias, String preference) {
+            String saved = getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).getString(preference, "");
             if (saved == null || saved.isEmpty()) return "";
             try {
                 String[] parts = saved.split(":", 2);
                 if (parts.length != 2) return "";
-                SecretKey secret = key(false);
+                SecretKey secret = key(alias, false);
                 if (secret == null) return "";
                 Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
                 cipher.init(Cipher.DECRYPT_MODE, secret,
@@ -200,9 +205,83 @@ public final class MainActivity extends Activity {
             } catch (Exception e) { return ""; }
         }
 
+        @JavascriptInterface public boolean saveGeminiKey(String value) { return saveSecret(KEY_ALIAS, "gemini", value); }
+        @JavascriptInterface public String loadGeminiKey() { return loadSecret(KEY_ALIAS, "gemini"); }
+        @JavascriptInterface public boolean saveOpenAIKey(String value) { return saveSecret(OPENAI_ALIAS, "openai", value); }
+        // JavaScript can only ask whether a key exists; the secret never returns to the WebView.
+        @JavascriptInterface public boolean hasOpenAIKey() { return !loadSecret(OPENAI_ALIAS, "openai").isEmpty(); }
+        @JavascriptInterface public void clearOpenAIKey() {
+            getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).edit().remove("openai").commit();
+        }
+
+        @JavascriptInterface
+        public void requestOpenAI(String id, String prompt) {
+            if (id == null || !id.matches("[a-zA-Z0-9-]{1,80}") || prompt == null || prompt.length() > 24000) return;
+            if (!openAIWorking.compareAndSet(false, true)) { deliverOpenAI(id, false, "Ya hay otra consulta en curso."); return; }
+            new Thread(() -> {
+                try {
+                    String secret = loadSecret(OPENAI_ALIAS, "openai");
+                    if (secret.isEmpty()) throw new IOException("Configura tu clave de la API de OpenAI en Ajustes.");
+                    HttpURLConnection conn = (HttpURLConnection) new URL("https://api.openai.com/v1/responses").openConnection();
+                    try {
+                        conn.setInstanceFollowRedirects(false);
+                        conn.setConnectTimeout(15000);
+                        conn.setReadTimeout(70000);
+                        conn.setRequestMethod("POST");
+                        conn.setDoOutput(true);
+                        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                        conn.setRequestProperty("Authorization", "Bearer " + secret);
+                        JSONObject body = new JSONObject();
+                        body.put("model", "gpt-4.1-mini");
+                        body.put("input", prompt);
+                        body.put("store", false);
+                        body.put("max_output_tokens", 3500);
+                        try (OutputStream out = conn.getOutputStream()) { out.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
+                        int status = conn.getResponseCode();
+                        if (status != 200) throw new IOException("OpenAI respondió " + status + ". Comprueba la clave, el saldo o los límites de tu API.");
+                        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                        try (InputStream in = conn.getInputStream()) {
+                            byte[] chunk = new byte[8192]; int n;
+                            while ((n = in.read(chunk)) != -1) {
+                                if (bytes.size() + n > 350000) throw new IOException("Respuesta demasiado grande.");
+                                bytes.write(chunk, 0, n);
+                            }
+                        }
+                        JSONObject result = new JSONObject(bytes.toString("UTF-8"));
+                        JSONArray output = result.optJSONArray("output");
+                        StringBuilder answer = new StringBuilder();
+                        if (output != null) for (int i = 0; i < output.length(); i++) {
+                            JSONArray parts = output.optJSONObject(i) == null ? null : output.optJSONObject(i).optJSONArray("content");
+                            if (parts != null) for (int j = 0; j < parts.length(); j++) {
+                                JSONObject part = parts.optJSONObject(j);
+                                if (part != null && "output_text".equals(part.optString("type"))) answer.append(part.optString("text"));
+                            }
+                        }
+                        if (answer.length() == 0) throw new IOException("OpenAI no devolvió texto utilizable.");
+                        deliverOpenAI(id, true, answer.toString());
+                    } finally { conn.disconnect(); }
+                } catch (Exception e) { deliverOpenAI(id, false, e.getMessage() == null ? "No se pudo consultar OpenAI." : e.getMessage()); }
+                finally { openAIWorking.set(false); }
+            }, "focusforge-openai").start();
+        }
+
+        private void deliverOpenAI(String id, boolean ok, String message) {
+            runOnUiThread(() -> {
+                if (webView != null) webView.evaluateJavascript(
+                        "window.FocusForgeOpenAIResult(" + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(message) + ")", null);
+            });
+        }
+
         @JavascriptInterface
         public void clearGeminiKey() {
             getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE).edit().remove("gemini").commit();
+        }
+
+        @JavascriptInterface
+        public String readSpreadsheet(String base64) {
+            if (base64 == null || base64.length() > 3_000_000) return "ERROR: archivo XLSX demasiado grande (máximo 2 MB).";
+            try { return SpreadsheetReader.read(Base64.decode(base64, Base64.DEFAULT)); }
+            catch (Exception e) { return "ERROR: no se pudo leer este XLSX. Exporta la hoja a CSV e inténtalo otra vez."; }
         }
 
         @JavascriptInterface
